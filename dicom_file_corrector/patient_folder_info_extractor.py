@@ -1,7 +1,5 @@
-import os 
-import utils.point_cloud_array_creator as pc 
-import Iterative_closest_point as icp
-import shutil
+import os
+import shutil 
 
 def empty_copy(old_patient_folder_path: str, destination_path: str,title: str) -> None: 
     """
@@ -30,63 +28,44 @@ def empty_copy(old_patient_folder_path: str, destination_path: str,title: str) -
             path_to_dicom_file = os.path.join(serie_path, file_name) 
             os.remove(path_to_dicom_file)
 
-def patients_folder_translation(path_to_patients_folder: str,non_icp_translations=None) -> dict: 
+def file_paths_from_patient_folder(path_to_patient: str) -> dict:
     """
-    This method takes a folder of patient and create a dictionnary that associate 
-    a patient with the translation that is necessary to register his 2 point cloud in a 
-    case of z inverted position. 
+    This method extract the path of every file in a patient folder 
 
-    :param path_to_patients_folder : the path of the folder containing all the patients 
-    that need a correction 
-    :param non_icp_translations: a list of translation vector obtain by another way than icp
+    :param path_to_patient : the path leading to the patient
 
-    :return : a dictionnary with all the patient as keys and the translation needed as 
-    values
+    :return : a dictionnary associating the title of the file as keys and the
+    path to it as value 
+    """   
+    study = os.listdir(path_to_patient)[0]
+    path_to_study = os.path.join(path_to_patient, study)   
+    series = os.listdir(path_to_study)
+    path_series0 = os.path.join(path_to_study, series[0])
+    path_series1=os.path.join(path_to_study, series[1])
+    path_series2=os.path.join(path_to_study, series[2])
+    path_series3=os.path.join(path_to_study, series[3])
+    rtdose = os.listdir(path_series1)[0]
+    path_rtdose = os.path.join(path_series1, rtdose)
+    rtplan = os.listdir(path_series2)[0]
+    path_rtplan = os.path.join(path_series2, rtplan)
+    rtstru = os.listdir(path_series3)[0]
+    path_rtstruct = os.path.join(path_series3, rtstru)
+    return {series[0]:path_series0, rtdose:path_rtdose, rtplan:path_rtplan, rtstru: path_rtstruct}
+
+def series_paths_from_patient_folder(path_to_patient: str) -> dict:
     """
-    patients = os.listdir(path_to_patients_folder)
-    dict_patient_translation = {} 
-    dict_paths_of_folder = dict_path_folder_of_patient(path_to_patients_folder) 
-    if non_icp_translations != None : 
-        for i in range(len(patients[i])) : 
-            dict_patient_translation[patients[i]] = non_icp_translations[i]
-    else : 
-        for i in range(len(dict_paths_of_folder['list_path_series0'])) : 
-            path_series0 = dict_paths_of_folder['list_path_series0'][i] 
-            path_RTPLAN = dict_paths_of_folder['list_path_RTPLAN'][i] 
-            image_cloud = pc.image_point_cloud(path_series0)
-            source_cloud = pc.source_point_cloud(path_RTPLAN)
-            image_cloud = pc.flip_image_point_cloud(image_cloud)
-            translation = icp.icp_translation(image_cloud,source_cloud)
-            dict_patient_translation[patients[i]] = translation 
-    
-    return dict_patient_translation
+    This method extract the path of every series in a patient folder 
 
-def dict_path_folder_of_patient(path_to_patients_folder: str) -> dict: 
-    """
-    This method takes a folder with many patient and put , in a dictionnary, all the series0 and
-    the RTPLAN file of patients. Note that we have to have all the CT files in the series0 and the RT 
-    plan in the series2.
+    :param path_to_patient : the path leading to the patient
 
-    :param path_to_patient_folder : The complete path of the folder containing all the patient
-
-    :return : a dictionnary with a key for the path of the series0 of all the patient and a key for the 
-    path of the RTPLAN of all the patient. 
-    """
-
-    dict_path = {} 
-    dict_path['list_path_series0'] = []
-    dict_path['list_path_RTPLAN'] = []
-    patients = os.listdir(path_to_patients_folder) 
-    for patient in range(len(patients)) : 
-        path_patient = os.path.join(path_to_patients_folder, patients[patient])
-        path_study = os.path.join(path_patient,'study0')
-        path_series0 = os.path.join(path_study,'series0')
-        path_series2 = os.path.join(path_study,'series2')
-        path_RTPLAN = os.path.join(path_series2,'RTPLAN0.dcm')
-        dict_path['list_path_series0'] += [path_series0, ]
-        dict_path['list_path_RTPLAN'] += [path_RTPLAN, ]
-    
-    return dict_path
-
-
-
+    :return : a dictionnary associating a title of the path as keys and the
+    path to ithe serie as value 
+    """   
+    study = os.listdir(path_to_patient)[0]
+    path_to_study = os.path.join(path_to_patient, study)   
+    series = os.listdir(path_to_study)
+    path_series0 = os.path.join(path_to_study, series[0])
+    path_series1=os.path.join(path_to_study, series[1])
+    path_series2=os.path.join(path_to_study, series[2])
+    path_series3=os.path.join(path_to_study, series[3])
+    return {'Path_to_series0':path_series0, 'Path_to_series1':path_series1, 'Path_to_series2':path_series2,'Path_to_series3':path_series3}
