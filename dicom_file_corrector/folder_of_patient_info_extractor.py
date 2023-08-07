@@ -1,10 +1,9 @@
 import os 
-import utils.point_cloud_array_creator as pc 
+import utils.cloud_creator as cc 
 import Iterative_closest_point as icp
-import shutil
 
 
-def patients_folder_translation(path_to_patients_folder: str,non_icp_translations=None) -> dict: 
+def obtain_translations_from_patients_folder(path_to_patients_folder: str, non_icp_translations = None) -> dict: 
     """
     This method takes a folder of patient and create a dictionnary that associate 
     a patient with the translation that is necessary to register his 2 point cloud in a 
@@ -17,7 +16,7 @@ def patients_folder_translation(path_to_patients_folder: str,non_icp_translation
     """
     patients = os.listdir(path_to_patients_folder)
     dict_patient_translation = {} 
-    dict_paths_of_folder = dict_path_folder_of_patient(path_to_patients_folder) 
+    dict_paths_of_folder = create_dict_of_path_from_folder_of_patient(path_to_patients_folder) 
     if non_icp_translations != None : 
         for i in range(len(patients[i])) : 
             dict_patient_translation[patients[i]] = non_icp_translations[i]
@@ -25,15 +24,15 @@ def patients_folder_translation(path_to_patients_folder: str,non_icp_translation
         for i in range(len(dict_paths_of_folder['list_path_series0'])) : 
             path_series0 = dict_paths_of_folder['list_path_series0'][i] 
             path_RTPLAN = dict_paths_of_folder['list_path_RTPLAN'][i] 
-            image_cloud = pc.image_point_cloud(path_series0)
-            source_cloud = pc.source_point_cloud(path_RTPLAN)
-            image_cloud = pc.flip_image_point_cloud(image_cloud)
-            translation = icp.icp_translation(image_cloud,source_cloud)
+            image_cloud = cc.create_image_point_cloud_from_dicom_series_folder(path_series0)
+            source_cloud = cc.create_source_point_cloud_from_rtplan(path_RTPLAN)
+            image_cloud = cc.z_flip_image_point_cloud(image_cloud)
+            translation = icp.icp_translation(image_cloud, source_cloud)
             dict_patient_translation[patients[i]] = translation 
 
     return dict_patient_translation
 
-def dict_path_folder_of_patient(path_to_patients_folder: str) -> dict: 
+def create_dict_of_path_from_folder_of_patient(path_to_patients_folder: str) -> dict: 
     """
     This method takes a folder with many patient and put , in a dictionnary, all the series0 and
     the RTPLAN file of patients. Note that we have to have all the CT files in the series0 and the RT 

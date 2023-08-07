@@ -2,7 +2,7 @@ import pydicom
 from typing import Optional,List
 import os
 
-def save_rtplan_referenced_structure_set(path_to_rtplan: str, title: str,path_to_new_rtstruct: str) -> None : 
+def save_rtplan_referenced_structure_set(path_to_rtplan: str, title: str, path_to_new_rtstruct: str) -> None : 
     """
     This method create a new RTPLAN file with a new referenced structure set 
     :param path_to_rtplan: the path to the RTPLAN file
@@ -10,7 +10,7 @@ def save_rtplan_referenced_structure_set(path_to_rtplan: str, title: str,path_to
     return : None 
     """    
     open_plan = pydicom.dcmread(path_to_rtplan) 
-    change_referenced_rtstruct(open_plan,path_to_new_rtstruct)
+    change_referenced_rtstruct(open_plan, path_to_new_rtstruct)
     open_plan.save_as(title)
 
 def change_referenced_rtstruct(file_dataset: pydicom.FileDataset, path_to_new_rtstru: str) -> None :
@@ -25,7 +25,7 @@ def change_referenced_rtstruct(file_dataset: pydicom.FileDataset, path_to_new_rt
     file_dataset.ReferencedStructureSetSequence[0].ReferencedSOPInstanceUID = rtstruc_new_sop_instance_uid
 
 
-def change_rtstruct_uids(rtstrut_file_dataset: pydicom.FileDataset, path_to_new_series_0_folder: str) -> None : 
+def change_rtstruct_uids(rtstrut_file_dataset: pydicom.FileDataset, path_to_new_series0_folder: str) -> None : 
     """
     This method change some UIDs of a rtstruct file and store the old one in appropriate attribute
     :param rtstrut_file_dataset : a pydicom rtstruct file type dataset
@@ -33,22 +33,22 @@ def change_rtstruct_uids(rtstrut_file_dataset: pydicom.FileDataset, path_to_new_
     return : None 
     """
     add_PredecessorStructureSet(rtstrut_file_dataset)
-    change_contour_image_referenced_sop_uid(rtstrut_file_dataset, path_to_new_series_0_folder)
+    change_contour_image_referenced_sop_uid(rtstrut_file_dataset, path_to_new_series0_folder)
     change_sop_instance_uid(rtstrut_file_dataset)
     change_series_instance_uid(rtstrut_file_dataset)
-    change_frame_of_reference_series0_instance_uid(rtstrut_file_dataset, path_to_new_series_0_folder)
+    change_frame_of_reference_series0_instance_uid(rtstrut_file_dataset, path_to_new_series0_folder)
 
-def change_contour_image_referenced_sop_uid(rtstrut_file_dataset: pydicom.FileDataset, path_to_new_series_0_folder: str) -> None : 
+def change_contour_image_referenced_sop_uid(rtstrut_file_dataset: pydicom.FileDataset, path_to_new_series0_folder: str) -> None : 
     """
     This method refer all contour in a rtstruct file with the new images SOPInstanceUID 
     :param rtstrut_file_dataset : a pydicom rtstruct type dataset
     :param path_to_new_series_0_folder : the path of a new series0 folder with all the new images 
     return : None
     """    
-    dict_sop_series0 = dict_sop_series0_creator(path_to_new_series_0_folder)
+    dict_sop_series0 = create_dict_of_sop_series0(path_to_new_series0_folder)
     contour_image_sequence = rtstrut_file_dataset.ReferencedFrameOfReferenceSequence[0].RTReferencedStudySequence[0].RTReferencedSeriesSequence[0].ContourImageSequence
     for i in range(len(contour_image_sequence)): 
-        contour=contour_image_sequence[i]
+        contour = contour_image_sequence[i]
         old_sop_instance_uid = contour.ReferencedSOPInstanceUID 
         new_sop_instance_uid = find_new_sop_instance_uid(dict_sop_series0,old_sop_instance_uid) 
         rtstrut_file_dataset.ReferencedFrameOfReferenceSequence[0].RTReferencedStudySequence[0].RTReferencedSeriesSequence[0].ContourImageSequence[i].ReferencedSOPClassUID = new_sop_instance_uid
@@ -62,7 +62,7 @@ def change_frame_of_reference_series0_instance_uid(rtstrut_file_dataset: pydicom
     return : None
     """
     images = os.listdir(path_to_new_series_0_folder) 
-    path_image = os.path.join(path_to_new_series_0_folder,images[0])
+    path_image = os.path.join(path_to_new_series_0_folder, images[0])
     open_image = pydicom.dcmread(path_image) 
     new_series0_UID = open_image.SeriesInstanceUID 
     rtstrut_file_dataset.ReferencedFrameOfReferenceSequence[0].RTReferencedStudySequence[0].RTReferencedSeriesSequence[0].SeriesInstanceUID = new_series0_UID
@@ -98,7 +98,7 @@ def find_new_sop_instance_uid(dict_sop_series0: dict, old_sop_instance_uid_assoc
     return new_sop_instance_uid
 
 
-def dict_sop_series0_creator(path_to_new_series0_folder: str) -> dict : 
+def create_dict_of_sop_series0(path_to_new_series0_folder: str) -> dict : 
     """
     This method create a dictionnary associating an image of the series0 with his 
     old image and new image SOPInstanceUID
@@ -113,7 +113,7 @@ def dict_sop_series0_creator(path_to_new_series0_folder: str) -> dict :
         open_image = pydicom.dcmread(path_ct_file) 
         old_sop = open_image.ReferencedImageSequence[0].ReferencedSOPInstanceUID
         new_sop = open_image.SOPInstanceUID 
-        dict[images[image]] = [old_sop,new_sop]
+        dict[images[image]] = [old_sop, new_sop]
     return dict
 
 

@@ -1,4 +1,4 @@
 import file_and_folder_corrector
-import utils.point_cloud_array_creator as pc 
+import utils.cloud_creator as cc
 import Iterative_closest_point
 import patient_folder_info_extractor
