@@ -6,8 +6,7 @@ import shutil
 import uid_changer
 
 def patient_folder_corrector(path_main_directory: str, destination_path: str, 
-                             path_to_folder: str, dict_patient_translation: dict, 
-                             order_of_series_reading: list) -> None:
+                             path_to_folder: str, dict_patient_translation: dict) -> None:
     """
     This method correct all the patient in a folder full of them. 
     :param path_main_directory : the path of the folder containing the entire project 
@@ -22,9 +21,9 @@ def patient_folder_corrector(path_main_directory: str, destination_path: str,
         path_to_patient = os.path.join(patients[patient])
         translation = dict_patient_translation[patients[patient]] 
         patient_corrector(path_main_directory, path_to_patient,
-                          destination_path, translation[0],
-                          translation[1], translation[2],
-                          patients[patient], order_of_series_reading)
+                          destination_path, translation[0][0],
+                          translation[1][0], translation[2][0],
+                          patients[patient])
 
 def patient_corrector(path_main_directory: str, path_to_patient: str,
                       destination_path: str, x_translation: float,
@@ -44,6 +43,7 @@ def patient_corrector(path_main_directory: str, path_to_patient: str,
     """
     create_empty_copy(path_to_patient, destination_path,title)
     path_to_corrected_patient = os.path.abspath(title)
+    comment='GIT : https://github.com/Jobret019/Dicom_file_corrector.git, commit X'
 
     patient_files_paths = extract_file_paths_from_patient_folder(path_to_patient)
     corrected_patient_series_paths = extract_series_paths_from_patient_folder(path_to_corrected_patient)
@@ -57,7 +57,7 @@ def patient_corrector(path_main_directory: str, path_to_patient: str,
     for serie in order_of_series_reading : 
         if serie == image_series : 
             series_with_ct_file_folder_corrector(patient_files_paths['series0'], path_main_directory, corrected_patient_series_paths['Path_to_series0'],
-                                     x_translation, y_translation, z_translation)
+                                     x_translation, y_translation, z_translation, comment)
 
         elif serie == rtdose_series :
             rtstru = list(patient_files_paths.keys())[3]
@@ -77,17 +77,18 @@ def patient_corrector(path_main_directory: str, path_to_patient: str,
 
         elif serie == rtstru_series : 
             rtstru = list(patient_files_paths.keys())[3]
-            rtstruct_file_corrector_position(patient_files_paths[rtstru], z_translation, rtstru, corrected_patient_series_paths['Path_to_series0'])
+            rtstruct_file_corrector_position(patient_files_paths[rtstru], z_translation, rtstru, corrected_patient_series_paths['Path_to_series0'], comment)
             new_path_rtstru = os.path.join(path_main_directory, rtstru)
             shutil.move(new_path_rtstru, corrected_patient_series_paths['Path_to_series3']) 
 
-def rtstruct_file_corrector_position(path_to_structure: str, z_translation: float, title: str, path_to_new_series0) -> None : 
+def rtstruct_file_corrector_position(path_to_structure: str, z_translation: float, title: str, path_to_new_series0: str, other_comment: str) -> None : 
     """
     This method create a corrected RTSTRUCT file from an RTSTRUCT file with inverted and 
     incorrect contour z position data  
     :param path_to_structure : the path of the RTSTRUCT Dicom file
     :param z_translation : the value of the z component of the translation  
     :param title : The title of the corrected RTSTRUCT file
+    :param other_comments : a comment to add with the default comment
     :return : None 
     """
     open_structure = pydicom.dcmread(path_to_structure)
@@ -98,7 +99,7 @@ def rtstruct_file_corrector_position(path_to_structure: str, z_translation: floa
             corrected_contour_data = contour_position_corrector(contour_sequence, contour, 0, 0, z_translation)
             open_structure.ROIContourSequence[structure].ContourSequence[contour].ContourData = corrected_contour_data
     string_z_translation = str(z_translation) + ' mm'
-    open_structure.StructureSetDescription = 'All the contours in these structures were corrected with an inversion and then a shift of ' + string_z_translation + ' in z with an ICP algorithm. GIT : https://github.com/Jobret019/Dicom_file_corrector.git, commit X'
+    open_structure.StructureSetDescription = 'All the contours in these structures were corrected with an inversion and then a shift of ' + string_z_translation + ' in z with an ICP algorithm.' + other_comment
     uid_changer.change_rtstruct_uids(open_structure, path_to_new_series0)
     open_structure.save_as(title)
 
@@ -120,7 +121,7 @@ def no_dvh_and_new_ref_rtstruct_rtdose(path_to_rtdose: str, title: str, path_to_
 
 def series_with_ct_file_folder_corrector(path_to_series0: str, path_main_directory: str,
                               path_to_new_series0_folder: str, x_translation: float, 
-                              y_translation: float, z_translation: float) -> None : 
+                              y_translation: float, z_translation: float, other_comments: str) -> None : 
     """
     This method create and transfer all the corrected CT images file in a new series0 folder  
     :param path_to_series0 : the path of the series0 of the Dicom file
@@ -129,6 +130,7 @@ def series_with_ct_file_folder_corrector(path_to_series0: str, path_main_directo
     :param x_translation : the value of the x component of the translation
     :param y_translation : the value of the y component of the translation
     :param z_translation : the value of the z component of the translation  
+    :param other_comments : a comment to add with the default comment
     :return : None
     """
     images_files = os.listdir(path_to_series0)
@@ -139,11 +141,11 @@ def series_with_ct_file_folder_corrector(path_to_series0: str, path_main_directo
         new_path = os.path.join(path_main_directory, title)
         ct_image_file_corrector_position(complete_path, x_translation, 
                                 y_translation, z_translation,
-                                title, new_series0_instance_uid)
+                                title, other_comments, new_series0_instance_uid)
         shutil.move(new_path, path_to_new_series0_folder) 
 
 def ct_image_file_corrector_position(path_to_ct_file: str, x_translation: float, y_translation: float, 
-                            z_translation: float, title: str, series_instance_uid : str = None) -> None : 
+                            z_translation: float, title: str, other_comments: str, series_instance_uid : str = None) -> None : 
     """
     This method correct a CT file with inverted z position and shifted Image Position. The method 
     create a new corrected CT file 
@@ -152,6 +154,8 @@ def ct_image_file_corrector_position(path_to_ct_file: str, x_translation: float,
     :param y_translation : the value of the y component of the translation
     :param z_translation : the value of the z component of the translation 
     :param title : the title of the new CT Dicom file 
+    :param other_comments : a comment to add with the default comment
+    :param series_instance_uid : the uid of the new series containing the image file
     :return : None
     """
     open_image = pydicom.dcmread(path_to_ct_file) 
@@ -162,7 +166,7 @@ def ct_image_file_corrector_position(path_to_ct_file: str, x_translation: float,
     string_x_translation = str(x_translation)+' mm'
     string_y_translation = str(y_translation)+' mm'
     string_z_translation = str(z_translation)+' mm'
-    open_image.ImageComments = 'The Image Position (Patient) was corrected with an inversion in z and then a shift of ' + string_x_translation + ' in x, ' + string_y_translation + ' in y and ' + string_z_translation + ' in z with an ICP algorithm. GIT : https://github.com/Jobret019/Dicom_file_corrector.git, commit X'
+    open_image.ImageComments = 'The Image Position (Patient) was corrected with an inversion in z and then a shift of ' + string_x_translation + ' in x, ' + string_y_translation + ' in y and ' + string_z_translation + ' in z with an ICP algorithm.'+ other_comments
     uid_changer.change_and_store_ct_uids(open_image)
     if series_instance_uid != None : 
         uid_changer.change_ct_series_instance_uid(open_image, series_instance_uid) 
