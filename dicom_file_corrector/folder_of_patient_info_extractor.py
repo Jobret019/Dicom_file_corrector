@@ -27,7 +27,7 @@ def obtain_translations_from_patients_folder(path_to_patients_folder: str, non_i
             image_cloud = cc.create_image_point_cloud_from_dicom_series_folder(path_series0)
             source_cloud = cc.create_source_point_cloud_from_rtplan(path_RTPLAN)
             image_cloud = cc.z_flip_image_point_cloud(image_cloud)
-            translation = icp.icp_translation(image_cloud, source_cloud)
+            translation = icp.determine_icp_translation(image_cloud, source_cloud)
             dict_patient_translation[patients[i]] = translation 
 
     return dict_patient_translation
@@ -48,10 +48,10 @@ def create_dict_of_path_from_folder_of_patient(path_to_patients_folder: str) -> 
     patients = os.listdir(path_to_patients_folder) 
     for patient in range(len(patients)) : 
         path_patient = os.path.join(path_to_patients_folder, patients[patient])
-        path_study = os.path.join(path_patient,'study0')
-        path_series0 = os.path.join(path_study,'series0')
-        path_series2 = os.path.join(path_study,'series2')
-        path_RTPLAN = os.path.join(path_series2,'RTPLAN0.dcm')
+        path_study = os.path.join(path_patient, 'study0')
+        path_series0 = os.path.join(path_study, 'series0')
+        path_series2 = os.path.join(path_study, 'series2')
+        path_RTPLAN = os.path.join(path_series2, 'RTPLAN0.dcm')
         dict_path['list_path_series0'] += [path_series0, ]
         dict_path['list_path_RTPLAN'] += [path_RTPLAN, ]
 

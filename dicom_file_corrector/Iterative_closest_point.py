@@ -12,8 +12,8 @@ def apply_transformation_on_image_cloud(image_cloud: np.array, source_cloud: np.
     :return : the corrected image point cloud with new point position. 
     """
     image_cloud = cc.z_flip_image_point_cloud(image_cloud) 
-    translation = determine_icp_translation(image_cloud,source_cloud) 
-    I_matrix = np.array([[1,0,0],[0,1,0],[0,0,1]])
+    translation = determine_icp_translation(image_cloud, source_cloud) 
+    I_matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
     corrected_image_point_cloud = ApplyTransformation(image_cloud, I_matrix, translation) 
     return corrected_image_point_cloud 
 

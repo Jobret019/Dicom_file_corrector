@@ -6,6 +6,7 @@ def save_rtplan_referenced_structure_set(path_to_rtplan: str, title: str, path_t
     """
     This method create a new RTPLAN file with a new referenced structure set 
     :param path_to_rtplan: the path to the RTPLAN file
+    :param title : the title of the new RTPLAN file
     :param path_to_new_path_to_new_rtstr : the path of a new rtstruct
     return : None 
     """    
@@ -16,7 +17,7 @@ def save_rtplan_referenced_structure_set(path_to_rtplan: str, title: str, path_t
 def change_referenced_rtstruct(file_dataset: pydicom.FileDataset, path_to_new_rtstru: str) -> None :
     """
     This method refer a DICOM file to a new rtstruct file 
-    :param rtstrut_file_dataset : a pydicom rtstruct file type dataset
+    :param file_dataset : a pydicom file dataset
     :param path_to_new_path_to_new_rtstr : the path of a new rtstruct
     return : None 
     """   
@@ -76,7 +77,7 @@ def add_PredecessorStructureSet(rtstrut_file_dataset: pydicom.FileDataset) -> No
     """
     predecessor_structure_set_sequence = pydicom.Dataset()
     predecessor_structure_set_sop_class_uid = rtstrut_file_dataset.SOPClassUID
-    predecessor_structure_set_sop_instance_uid=rtstrut_file_dataset.SOPInstanceUID
+    predecessor_structure_set_sop_instance_uid = rtstrut_file_dataset.SOPInstanceUID
     rtstrut_file_dataset.PredecessorStructureSetSequence = pydicom.Sequence([predecessor_structure_set_sequence])
     rtstrut_file_dataset.PredecessorStructureSetSequence[0].ReferencedSOPClassUID = predecessor_structure_set_sop_class_uid
     rtstrut_file_dataset.PredecessorStructureSetSequence[0].ReferencedSOPInstanceUID = predecessor_structure_set_sop_instance_uid
@@ -131,7 +132,7 @@ def change_and_store_ct_uids(ct_file_dataset: pydicom.FileDataset) -> None :
 def change_sop_instance_uid(file_dataset: pydicom.FileDataset) -> None :  
     """
     This method change the present SOPInstanceUID of a file with a new random one 
-    :param ct_file_dataset : a pydicom ct file type dataset
+    :param file_dataset : a pydicom file dataset
     return : None 
     """
     file_dataset.SOPInstanceUID = generate_uid()

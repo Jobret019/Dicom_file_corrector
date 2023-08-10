@@ -17,11 +17,11 @@ source_point_cloud = cc.create_source_point_cloud_from_rtplan(patient_rtplan_pat
 inverse_image_point_cloud = cc.z_flip_image_point_cloud(image_point_cloud) 
 translation = icp.determine_icp_translation(inverse_image_point_cloud, source_point_cloud)
 
-file_and_folder_corrector.patient_corrector(path_main_directory,patient_path, path_destination, translation[0][0], translation[1][0], translation[2][0],'CorrectedPatient')
+file_and_folder_corrector.correct_patient_folder(path_main_directory, patient_path, path_destination, translation[0][0], translation[1][0], translation[2][0], 'CorrectedPatient')
 
 #To verify that the point cloud are align
 transform_image_point_cloud = icp.apply_transformation_on_image_cloud(image_point_cloud, source_point_cloud)
-vis.visualization_of_superposed_point_cloud(transform_image_point_cloud, source_point_cloud, 'Image Point Cloud', 'Source Point Cloud')
+vis.visualize_superposed_point_cloud(transform_image_point_cloud, source_point_cloud, 'Image Point Cloud', 'Source Point Cloud')
 
 
 
@@ -29,10 +29,10 @@ vis.visualization_of_superposed_point_cloud(transform_image_point_cloud, source_
 folder_of_patient_path = r'C:\Users\user_name\container_of_project\project_location\project_name\folder_of_patient' 
 patients_translations = fopie.obtain_translations_from_patients_folder(folder_of_patient_path) 
 
-file_and_folder_corrector.patient_folder_corrector(path_main_directory, path_destination, folder_of_patient_path, patients_translations)
+file_and_folder_corrector.correct_folder_of_patient(path_main_directory, path_destination, folder_of_patient_path, patients_translations)
 
 #Correction of a folder of patient with known translation
 list_of_translation = [] #of course, in reality, this list is not empty 
 patients_translations = fopie.obtain_translations_from_patients_folder(folder_of_patient_path, list_of_translation) 
 
-file_and_folder_corrector.patient_folder_corrector(path_main_directory, path_destination,folder_of_patient_path, patients_translations)
+file_and_folder_corrector.correct_folder_of_patient(path_main_directory, path_destination, folder_of_patient_path, patients_translations)

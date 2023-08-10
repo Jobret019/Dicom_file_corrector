@@ -7,7 +7,7 @@ def z_flip_image_point_cloud(image_cloud: np.array) -> np.array:
     This method flip an image point cloud relative to the z axis 
     
     :param image_cloud : the image cloud to flip 
-    :return : an image point cloud with the z inverse
+    :return : an image point cloud with the z inverted
     """
     inversion_matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, -1]])
     inverse_image_cloud = np.dot(inversion_matrix, image_cloud ) 
@@ -36,15 +36,15 @@ def create_image_point_cloud_from_dicom_series_folder(path_to_serie: str) -> np.
     pixel_positions_x,pixel_positions_y,_ = express_pixel_position_in_patient_coordinate(os.path.join(path_to_serie, paths[0]))
 
     for i in range(len(paths)) : 
-        complete_path = os.path.join(path_to_serie,paths[i])
-        data=get_image_hu_data_from_file(complete_path)
+        complete_path = os.path.join(path_to_serie, paths[i])
+        data = get_image_hu_data_from_file(complete_path)
         if max <= np.max(data) :
             max = np.amax(data) 
 
     for i in range(len(paths)) : 
         complete_path = os.path.join(path_to_serie,paths[i])
         open_dicom = pydicom.dcmread(complete_path)
-        data=get_image_hu_data_from_file(complete_path)
+        data = get_image_hu_data_from_file(complete_path)
         maximum_HU_pixels_indexs = np.where(data == max)
         position_z = open_dicom.ImagePositionPatient[2]
         for j in range(len(maximum_HU_pixels_indexs[0])) : 
@@ -114,7 +114,7 @@ def get_image_hu_data_from_file(path_to_image_file: str) -> np.array:
     data = pixel_data*rescale_slop+rescale_intercept
     return data
 
-def express_pixel_position_in_patient_coordinate(path_to_image_file: str) -> tuple[list,list,float]: 
+def express_pixel_position_in_patient_coordinate(path_to_image_file: str) -> tuple[list, list, float]: 
     """
     This method express the xyz position of the pixels in an image slice in the patient coordinate 
     system (mm).
@@ -167,9 +167,9 @@ def express_source_position_in_patient_coordinate(path_to_plan: str, setup_numbe
 
     if hasattr(application_setup[setup_number], 'ChannelSequence') : 
         channel_sequence = application_setup[setup_number].ChannelSequence
-        Control_point=channel_sequence[0].BrachyControlPointSequence
+        Control_point = channel_sequence[0].BrachyControlPointSequence
         if len(Control_point) == 4 : 
-            source_position_2=Control_point[2].ControlPoint3DPosition 
+            source_position_2 = Control_point[2].ControlPoint3DPosition 
         elif len(Control_point) == 2 : 
             source_position_2 = None
 

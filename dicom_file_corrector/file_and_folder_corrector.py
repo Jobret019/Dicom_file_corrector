@@ -5,7 +5,7 @@ import pydicom
 import shutil
 import uid_changer
 
-def patient_folder_corrector(path_main_directory: str, destination_path: str, 
+def correct_folder_of_patient(path_main_directory: str, destination_path: str, 
                              path_to_folder: str, dict_patient_translation: dict) -> None:
     """
     This method correct all the patient in a folder full of them. 
@@ -20,12 +20,12 @@ def patient_folder_corrector(path_main_directory: str, destination_path: str,
     for patient in range(len(patients)) : 
         path_to_patient = os.path.join(patients[patient])
         translation = dict_patient_translation[patients[patient]] 
-        patient_corrector(path_main_directory, path_to_patient,
+        correct_patient_folder(path_main_directory, path_to_patient,
                           destination_path, translation[0][0],
                           translation[1][0], translation[2][0],
                           patients[patient])
 
-def patient_corrector(path_main_directory: str, path_to_patient: str,
+def correct_patient_folder(path_main_directory: str, path_to_patient: str,
                       destination_path: str, x_translation: float,
                       y_translation: float, z_translation: float,
                       title: str) -> None : 
@@ -56,14 +56,14 @@ def patient_corrector(path_main_directory: str, path_to_patient: str,
 
     for serie in order_of_series_reading : 
         if serie == image_series : 
-            series_with_ct_file_folder_corrector(patient_files_paths['series0'], path_main_directory, corrected_patient_series_paths['Path_to_series0'],
+            correct_a_series_folder_with_ct_files(patient_files_paths['series0'], path_main_directory, corrected_patient_series_paths['Path_to_series0'],
                                      x_translation, y_translation, z_translation, comment)
 
         elif serie == rtdose_series :
             rtstru = list(patient_files_paths.keys())[3]
             rtdose = list(patient_files_paths.keys())[1]
             path_new_rt_strut = os.path.join(corrected_patient_series_paths['Path_to_series3'], rtstru)
-            no_dvh_and_new_ref_rtstruct_rtdose(patient_files_paths[rtdose], rtdose, path_new_rt_strut) 
+            make_a_no_dvh_and_new_ref_rtstruct_rtdose(patient_files_paths[rtdose], rtdose, path_new_rt_strut) 
             new_path_rtdose = os.path.join(path_main_directory, rtdose)
             shutil.move(new_path_rtdose, corrected_patient_series_paths['Path_to_series1']) 
 
@@ -81,22 +81,23 @@ def patient_corrector(path_main_directory: str, path_to_patient: str,
             new_path_rtstru = os.path.join(path_main_directory, rtstru)
             shutil.move(new_path_rtstru, corrected_patient_series_paths['Path_to_series3']) 
 
-def rtstruct_file_corrector_position(path_to_structure: str, z_translation: float, title: str, path_to_new_series0: str, other_comment: str) -> None : 
+def rtstruct_file_corrector_position(path_to_rtstruct: str, z_translation: float, title: str, path_to_new_series0: str, other_comment: str) -> None : 
     """
     This method create a corrected RTSTRUCT file from an RTSTRUCT file with inverted and 
     incorrect contour z position data  
     :param path_to_structure : the path of the RTSTRUCT Dicom file
     :param z_translation : the value of the z component of the translation  
+    :param path_to_new_series0 : the path of the new referenced series0
     :param title : The title of the corrected RTSTRUCT file
     :param other_comments : a comment to add with the default comment
     :return : None 
     """
-    open_structure = pydicom.dcmread(path_to_structure)
+    open_structure = pydicom.dcmread(path_to_rtstruct)
     contours_sequence = open_structure.ROIContourSequence
     for structure in range(len(contours_sequence)) :
         contour_sequence = contours_sequence[structure].ContourSequence
         for contour in range(len(contour_sequence)) :
-            corrected_contour_data = contour_position_corrector(contour_sequence, contour, 0, 0, z_translation)
+            corrected_contour_data = correct_contour_position(contour_sequence, contour, 0, 0, z_translation)
             open_structure.ROIContourSequence[structure].ContourSequence[contour].ContourData = corrected_contour_data
     string_z_translation = str(z_translation) + ' mm'
     open_structure.StructureSetDescription = 'All the contours in these structures were corrected with an inversion and then a shift of ' + string_z_translation + ' in z with an ICP algorithm.' + other_comment
@@ -104,7 +105,7 @@ def rtstruct_file_corrector_position(path_to_structure: str, z_translation: floa
     open_structure.save_as(title)
 
 
-def no_dvh_and_new_ref_rtstruct_rtdose(path_to_rtdose: str, title: str, path_to_new_rtstruct: str) -> None : 
+def make_a_no_dvh_and_new_ref_rtstruct_rtdose(path_to_rtdose: str, title: str, path_to_new_rtstruct: str) -> None : 
     """
     This method remove the DVH data from a RTDOSE Dicom file and change the referenced RTSTRUCT
     :param path_to_RTDOSE : the path of the RTDOSE Dicom file
@@ -119,7 +120,7 @@ def no_dvh_and_new_ref_rtstruct_rtdose(path_to_rtdose: str, title: str, path_to_
     uid_changer.change_referenced_rtstruct(open_dose, path_to_new_rtstruct)
     open_dose.save_as(title)
 
-def series_with_ct_file_folder_corrector(path_to_series0: str, path_main_directory: str,
+def correct_a_series_folder_with_ct_files(path_to_series0: str, path_main_directory: str,
                               path_to_new_series0_folder: str, x_translation: float, 
                               y_translation: float, z_translation: float, other_comments: str) -> None : 
     """
@@ -139,12 +140,12 @@ def series_with_ct_file_folder_corrector(path_to_series0: str, path_main_directo
         complete_path = os.path.join(path_to_series0, images_files[image])
         title = images_files[image]
         new_path = os.path.join(path_main_directory, title)
-        ct_image_file_corrector_position(complete_path, x_translation, 
+        correct_ct_image_file_position(complete_path, x_translation, 
                                 y_translation, z_translation,
                                 title, other_comments, new_series0_instance_uid)
         shutil.move(new_path, path_to_new_series0_folder) 
 
-def ct_image_file_corrector_position(path_to_ct_file: str, x_translation: float, y_translation: float, 
+def correct_ct_image_file_position(path_to_ct_file: str, x_translation: float, y_translation: float, 
                             z_translation: float, title: str, other_comments: str, series_instance_uid : str = None) -> None : 
     """
     This method correct a CT file with inverted z position and shifted Image Position. The method 
@@ -172,12 +173,13 @@ def ct_image_file_corrector_position(path_to_ct_file: str, x_translation: float,
         uid_changer.change_ct_series_instance_uid(open_image, series_instance_uid) 
     open_image.save_as(title)
 
-def contour_position_corrector(contour_sequence: object, contour: int, x_translation: float,
+def correct_contour_position(contour_sequence: object, contour: int, x_translation: float,
                        y_translation: float, z_translation: float) -> np.array :
     """
     This method inverse the z coordinates and then shift a structure contours in a direction
     :param contour_sequence : The contour sequence of the DICOM in which the contour position 
     data are located 
+    :param contour_sequence : a dicom dataset object containing all the contours of all the organs
     :param contour : the number link to the contour  
     :param x_translation : the value of the x component of the translation
     :param y_translation : the value of the y component of the translation
@@ -247,9 +249,9 @@ def define_order_of_series_correction(path_to_patient: str) -> list :
             open_dicom = pydicom.dcmread(list_of_file_path[i]) 
             print(open_dicom.SOPClassUID)
             if open_dicom.SOPClassUID == rtdose_class_uid : 
-                order[2]=i 
+                order[2] = i 
             if open_dicom.SOPClassUID == rtplan_class_uid : 
-                order[3]=i 
+                order[3] = i 
             if open_dicom.SOPClassUID == rtstruc_class_uid : 
-                order[1]=i 
+                order[1] = i 
     return order
