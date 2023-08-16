@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def visualization_of_superposed_point_cloud(data_point_cloud_1: np.array, data_point_cloud_2: np.array,
+def visualize_superposed_point_cloud(data_point_cloud_1: np.array, data_point_cloud_2: np.array,
                            label_point_cloud_1: np.array, label_point_cloud_2: np.array) -> None:
     """
     This method show the shape and appearance of 2 point cloud on the same figure 
@@ -22,7 +22,7 @@ def visualization_of_superposed_point_cloud(data_point_cloud_1: np.array, data_p
     plt.legend()
     plt.show()
 
-def visualization_of_point_cloud(data_point_cloud: np.array) -> None:
+def visualize_a_point_cloud(data_point_cloud: np.array) -> None:
     """
     This method show the shape of a point cloud
     

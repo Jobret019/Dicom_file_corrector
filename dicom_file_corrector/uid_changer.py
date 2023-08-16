@@ -52,7 +52,7 @@ def change_contour_image_referenced_sop_uid(rtstrut_file_dataset: pydicom.FileDa
         contour = contour_image_sequence[i]
         old_sop_instance_uid = contour.ReferencedSOPInstanceUID 
         new_sop_instance_uid = find_new_sop_instance_uid(dict_sop_series0,old_sop_instance_uid) 
-        rtstrut_file_dataset.ReferencedFrameOfReferenceSequence[0].RTReferencedStudySequence[0].RTReferencedSeriesSequence[0].ContourImageSequence[i].ReferencedSOPClassUID = new_sop_instance_uid
+        rtstrut_file_dataset.ReferencedFrameOfReferenceSequence[0].RTReferencedStudySequence[0].RTReferencedSeriesSequence[0].ContourImageSequence[i].ReferencedSOPInstanceUID = new_sop_instance_uid
 
 def change_frame_of_reference_series0_instance_uid(rtstrut_file_dataset: pydicom.FileDataset, path_to_new_series_0_folder: str) -> None : 
     """
