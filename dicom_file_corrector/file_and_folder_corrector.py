@@ -42,8 +42,8 @@ def correct_patient_folder(path_main_directory: str, path_to_patient: str,
     :return : None
     """
     create_empty_copy(path_to_patient, destination_path,title)
-    path_to_corrected_patient = os.path.abspath(title)
-    comment='GIT : https://github.com/Jobret019/Dicom_file_corrector.git, commit 381c6d9. The ReferencedImageSequence and RelatedSeriesSequence refere to the image before correction'
+    path_to_corrected_patient = os.path.join(destination_path, title)
+    comment='GIT : https://github.com/Jobret019/Dicom_file_corrector.git, commit dc7b788. The ReferencedImageSequence and RelatedSeriesSequence refere to the image before correction'
 
     patient_files_paths = extract_file_paths_from_patient_folder(path_to_patient)
     corrected_patient_series_paths = extract_series_paths_from_patient_folder(path_to_corrected_patient)
