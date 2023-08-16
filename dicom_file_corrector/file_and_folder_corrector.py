@@ -43,7 +43,7 @@ def correct_patient_folder(path_main_directory: str, path_to_patient: str,
     """
     create_empty_copy(path_to_patient, destination_path,title)
     path_to_corrected_patient = os.path.abspath(title)
-    comment='GIT : https://github.com/Jobret019/Dicom_file_corrector.git, commit X'
+    comment='GIT : https://github.com/Jobret019/Dicom_file_corrector.git, commit X. The ReferencedImageSequence and RelatedSeriesSequence refere to the image before correction'
 
     patient_files_paths = extract_file_paths_from_patient_folder(path_to_patient)
     corrected_patient_series_paths = extract_series_paths_from_patient_folder(path_to_corrected_patient)
@@ -54,34 +54,34 @@ def correct_patient_folder(path_main_directory: str, path_to_patient: str,
     rtdose_series = order_of_series_reading[2] 
     rtplan_series = order_of_series_reading[3] 
 
+    new_rtplan_instance_uid = uid_changer.generate_uid()
+    new_rtdose_instance_uid = uid_changer.generate_uid()
+    new_rtstruct_instance_uid = uid_changer.generate_uid()
+
     for serie in order_of_series_reading : 
         if serie == image_series : 
             correct_a_series_folder_with_ct_files(patient_files_paths['series0'], path_main_directory, corrected_patient_series_paths['Path_to_series0'],
                                      x_translation, y_translation, z_translation, comment)
 
         elif serie == rtdose_series :
-            rtstru = list(patient_files_paths.keys())[3]
             rtdose = list(patient_files_paths.keys())[1]
-            path_new_rt_strut = os.path.join(corrected_patient_series_paths['Path_to_series3'], rtstru)
-            make_a_no_dvh_and_new_ref_rtstruct_rtdose(patient_files_paths[rtdose], rtdose, path_new_rt_strut) 
+            make_a_no_dvh_and_new_ref_rtstruct_rtdose(patient_files_paths[rtdose], rtdose, new_rtplan_instance_uid, new_rtstruct_instance_uid, new_rtdose_instance_uid) 
             new_path_rtdose = os.path.join(path_main_directory, rtdose)
             shutil.move(new_path_rtdose, corrected_patient_series_paths['Path_to_series1']) 
 
         elif serie == rtplan_series : 
-            rtstru = list(patient_files_paths.keys())[3]
             rtplan = list(patient_files_paths.keys())[2]
-            path_new_rt_strut = os.path.join(corrected_patient_series_paths['Path_to_series3'], rtstru)
-            uid_changer.save_rtplan_referenced_structure_set(patient_files_paths[rtplan], rtplan, path_new_rt_strut)
+            uid_changer.change_rtplan_uid(patient_files_paths[rtplan], rtplan, new_rtstruct_instance_uid, new_rtdose_instance_uid, new_rtplan_instance_uid)
             new_path_rtplan = os.path.join(path_main_directory, rtplan)
             shutil.move(new_path_rtplan, corrected_patient_series_paths['Path_to_series2']) 
 
         elif serie == rtstru_series : 
             rtstru = list(patient_files_paths.keys())[3]
-            rtstruct_file_corrector_position(patient_files_paths[rtstru], z_translation, rtstru, corrected_patient_series_paths['Path_to_series0'], comment)
+            correct_rtstruct_file_position(patient_files_paths[rtstru], z_translation, rtstru, corrected_patient_series_paths['Path_to_series0'], comment, new_rtstruct_instance_uid)
             new_path_rtstru = os.path.join(path_main_directory, rtstru)
             shutil.move(new_path_rtstru, corrected_patient_series_paths['Path_to_series3']) 
 
-def rtstruct_file_corrector_position(path_to_rtstruct: str, z_translation: float, title: str, path_to_new_series0: str, other_comment: str) -> None : 
+def correct_rtstruct_file_position(path_to_rtstruct: str, z_translation: float, title: str, path_to_new_series0: str, other_comment: str, new_sop_instance_uid : str) -> None : 
     """
     This method create a corrected RTSTRUCT file from an RTSTRUCT file with inverted and 
     incorrect contour z position data  
@@ -90,6 +90,7 @@ def rtstruct_file_corrector_position(path_to_rtstruct: str, z_translation: float
     :param path_to_new_series0 : the path of the new referenced series0
     :param title : The title of the corrected RTSTRUCT file
     :param other_comments : a comment to add with the default comment
+    :param new_sop_instance_uid : the new sop instance of the rtstruct
     :return : None 
     """
     open_structure = pydicom.dcmread(path_to_rtstruct)
@@ -101,23 +102,28 @@ def rtstruct_file_corrector_position(path_to_rtstruct: str, z_translation: float
             open_structure.ROIContourSequence[structure].ContourSequence[contour].ContourData = corrected_contour_data
     string_z_translation = str(z_translation) + ' mm'
     open_structure.StructureSetDescription = 'All the contours in these structures were corrected with an inversion and then a shift of ' + string_z_translation + ' in z with an ICP algorithm.' + other_comment
-    uid_changer.change_rtstruct_uids(open_structure, path_to_new_series0)
+    uid_changer.change_rtstruct_uids(open_structure, path_to_new_series0, new_sop_instance_uid)
     open_structure.save_as(title)
 
 
-def make_a_no_dvh_and_new_ref_rtstruct_rtdose(path_to_rtdose: str, title: str, path_to_new_rtstruct: str) -> None : 
+def make_a_no_dvh_and_new_ref_rtstruct_rtdose(path_to_rtdose: str, title: str, rt_plan_new_sop_instance_uid: str, 
+                                              rtstruc_new_sop_instance_uid : str, new_sop_instance_uid : str) -> None : 
     """
     This method remove the DVH data from a RTDOSE Dicom file and change the referenced RTSTRUCT
     :param path_to_RTDOSE : the path of the RTDOSE Dicom file
     :param title : the title of the corrected RT dose file
-    :param path_to_new_rtstruct : the path to the new RTSTRUCT file that the RTDOSE refer too
-    return : None 
+    :param rt_plan_new_sop_instance_uid : the uid of the new rtplan
+    :param rtstruc_new_sop_instance_uid : the uid of the new rtstruc
+    :param new_sop_instance_uid :: the uid of the new rtdose
     """
     open_dose = pydicom.dcmread(path_to_rtdose) 
     del open_dose.DVHNormalizationDoseValue
     del open_dose.DVHNormalizationPoint
     del open_dose.DVHSequence 
-    uid_changer.change_referenced_rtstruct(open_dose, path_to_new_rtstruct)
+    uid_changer.change_referenced_rtplan(open_dose, rt_plan_new_sop_instance_uid)
+    uid_changer.change_referenced_rtstruct(open_dose, rtstruc_new_sop_instance_uid)
+    uid_changer.change_for_choose_sop_instance_uid(open_dose, new_sop_instance_uid)
+    uid_changer.change_series_instance_uid(open_dose)
     open_dose.save_as(title)
 
 def correct_a_series_folder_with_ct_files(path_to_series0: str, path_main_directory: str,

@@ -2,40 +2,78 @@ import pydicom
 from typing import Optional,List
 import os
 
-def save_rtplan_referenced_structure_set(path_to_rtplan: str, title: str, path_to_new_rtstruct: str) -> None : 
+def change_rtplan_uid(path_to_rtplan: str, title: str, new_rtstruct_uid: str, new_rtdose_uid: str, new_sop_instance_uid: str) -> None : 
     """
-    This method create a new RTPLAN file with a new referenced structure set 
+    This method create a new RTPLAN file with a new referenced structure set and rt dose 
     :param path_to_rtplan: the path to the RTPLAN file
     :param title : the title of the new RTPLAN file
-    :param path_to_new_path_to_new_rtstr : the path of a new rtstruct
+    :param path_to_new_rtstr : the path of a new rtstruct
+    :param path_to_new_rtdose : the path of a new rtdose
+    :param new_sop_instance_uid : a new instance uid 
     return : None 
     """    
     open_plan = pydicom.dcmread(path_to_rtplan) 
-    change_referenced_rtstruct(open_plan, path_to_new_rtstruct)
+    change_referenced_rtstruct(open_plan, new_rtstruct_uid)
+    change_referenced_rtdose(open_plan, new_rtdose_uid)
+    add_referenced_rtplan_sequence(open_plan)
+    change_for_choose_sop_instance_uid(open_plan, new_sop_instance_uid)
+    change_series_instance_uid(open_plan)
     open_plan.save_as(title)
 
-def change_referenced_rtstruct(file_dataset: pydicom.FileDataset, path_to_new_rtstru: str) -> None :
+def add_referenced_rtplan_sequence(rtplan_dataset: pydicom.FileDataset) -> None :  
+    """
+    This method add the ReferenceRTPlan attribute in a rtplan file dataset. It containin 
+    the present SOPInstanceUID and SOPClassUID of the rrtplan and the relationship
+    :param rtstrut_file_dataset : a pydicom rtstruct type dataset
+    return : None
+    """
+    referenced_rtplan_sequence = pydicom.Dataset()
+    referenced_rtplan_sop_class_uid = rtplan_dataset.SOPClassUID
+    referenced_rtplan_sop_instance_uid = rtplan_dataset.SOPInstanceUID
+    rtplan_dataset.ReferencedRTPlanSequence = pydicom.Sequence([referenced_rtplan_sequence])
+    rtplan_dataset.ReferencedRTPlanSequence[0].ReferencedSOPClassUID = referenced_rtplan_sop_class_uid
+    rtplan_dataset.ReferencedRTPlanSequence[0].ReferencedSOPInstanceUID = referenced_rtplan_sop_instance_uid  
+    rtplan_dataset.ReferencedRTPlanSequence[0].RTPlanRelationship = 'PREDECESSOR'
+
+def change_referenced_rtplan(file_dataset: pydicom.FileDataset, rtplan_new_sop_instance_uid: str) -> None :
     """
     This method refer a DICOM file to a new rtstruct file 
     :param file_dataset : a pydicom file dataset
-    :param path_to_new_path_to_new_rtstr : the path of a new rtstruct
+    :param rtplan_new_sop_instance_uid: the uid of the new rt plan to reference to
     return : None 
     """   
-    open_rtstru = pydicom.dcmread(path_to_new_rtstru)
-    rtstruc_new_sop_instance_uid = open_rtstru.SOPInstanceUID 
+    file_dataset.ReferencedRTPlanSequence[0].ReferencedSOPInstanceUID = rtplan_new_sop_instance_uid
+
+def change_referenced_rtdose(file_dataset: pydicom.FileDataset, rtdose_new_sop_instance_uid) -> None :
+    """
+    This method refer a DICOM file to a new rtstruct file 
+    :param file_dataset : a pydicom file dataset
+    :param rtplan_new_sop_instance_uid: the uid of the new rt dose to reference to
+    return : None 
+    """   
+    file_dataset.ReferencedDoseSequence[0].ReferencedSOPInstanceUID = rtdose_new_sop_instance_uid
+
+def change_referenced_rtstruct(file_dataset: pydicom.FileDataset, rtstruc_new_sop_instance_uid: str) -> None :
+    """
+    This method refer a DICOM file to a new rtstruct file 
+    :param file_dataset : a pydicom file dataset
+    :param rtplan_new_sop_instance_uid: the uid of the new rt struct to reference to
+    return : None 
+    """   
     file_dataset.ReferencedStructureSetSequence[0].ReferencedSOPInstanceUID = rtstruc_new_sop_instance_uid
 
 
-def change_rtstruct_uids(rtstrut_file_dataset: pydicom.FileDataset, path_to_new_series0_folder: str) -> None : 
+def change_rtstruct_uids(rtstrut_file_dataset: pydicom.FileDataset, path_to_new_series0_folder: str, new_sop_instance_uid : str) -> None : 
     """
     This method change some UIDs of a rtstruct file and store the old one in appropriate attribute
     :param rtstrut_file_dataset : a pydicom rtstruct file type dataset
     :param path_to_new_series_0_folder : the path of a new series0 folder with all the new images 
+    :param new_sop_instance_uid : a new instance uid 
     return : None 
     """
     add_PredecessorStructureSet(rtstrut_file_dataset)
     change_contour_image_referenced_sop_uid(rtstrut_file_dataset, path_to_new_series0_folder)
-    change_sop_instance_uid(rtstrut_file_dataset)
+    change_for_choose_sop_instance_uid(rtstrut_file_dataset, new_sop_instance_uid)
     change_series_instance_uid(rtstrut_file_dataset)
     change_frame_of_reference_series0_instance_uid(rtstrut_file_dataset, path_to_new_series0_folder)
 
@@ -129,10 +167,20 @@ def change_and_store_ct_uids(ct_file_dataset: pydicom.FileDataset) -> None :
     add_related_series_sequence(ct_file_dataset)
     change_sop_instance_uid(ct_file_dataset) 
 
+def change_for_choose_sop_instance_uid(file_dataset: pydicom.FileDataset, new_uid: str) -> None :  
+    """
+    This method change the present SOPInstanceUID of a file with a decide one 
+    :param file_dataset : a pydicom file dataset
+    :param new_uid : a new uid 
+    return : None 
+    """
+    file_dataset.SOPInstanceUID = new_uid
+
 def change_sop_instance_uid(file_dataset: pydicom.FileDataset) -> None :  
     """
     This method change the present SOPInstanceUID of a file with a new random one 
     :param file_dataset : a pydicom file dataset
+    :param new_uid : a new uid 
     return : None 
     """
     file_dataset.SOPInstanceUID = generate_uid()
