@@ -18,7 +18,7 @@ def correct_folder_of_patient(path_main_directory: str, destination_path: str,
     """
     patients = os.listdir(path_to_folder) 
     for patient in range(len(patients)) : 
-        path_to_patient = os.path.join(patients[patient])
+        path_to_patient = os.path.join(path_to_folder, patients[patient])
         translation = dict_patient_translation[patients[patient]] 
         correct_patient_folder(path_main_directory, path_to_patient,
                           destination_path, translation[0][0],
@@ -43,7 +43,7 @@ def correct_patient_folder(path_main_directory: str, path_to_patient: str,
     """
     create_empty_copy(path_to_patient, destination_path,title)
     path_to_corrected_patient = os.path.abspath(title)
-    comment='GIT : https://github.com/Jobret019/Dicom_file_corrector.git, commit X. The ReferencedImageSequence and RelatedSeriesSequence refere to the image before correction'
+    comment='GIT : https://github.com/Jobret019/Dicom_file_corrector.git, commit 381c6d9. The ReferencedImageSequence and RelatedSeriesSequence refere to the image before correction'
 
     patient_files_paths = extract_file_paths_from_patient_folder(path_to_patient)
     corrected_patient_series_paths = extract_series_paths_from_patient_folder(path_to_corrected_patient)
@@ -253,7 +253,6 @@ def define_order_of_series_correction(path_to_patient: str) -> list :
             order[0] = i
         elif len(list_of_list_of_files[i]) == 1 : 
             open_dicom = pydicom.dcmread(list_of_file_path[i]) 
-            print(open_dicom.SOPClassUID)
             if open_dicom.SOPClassUID == rtdose_class_uid : 
                 order[2] = i 
             if open_dicom.SOPClassUID == rtplan_class_uid : 
