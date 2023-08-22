@@ -1,6 +1,7 @@
 import os 
 import utils.cloud_creator as cc 
 import Iterative_closest_point as icp
+import numpy as np
 
 
 def obtain_translations_from_patients_folder(path_to_patients_folder: str, non_icp_translations = None) -> dict: 
@@ -19,6 +20,7 @@ def obtain_translations_from_patients_folder(path_to_patients_folder: str, non_i
     dict_paths_of_folder = create_dict_of_path_from_folder_of_patient(path_to_patients_folder) 
     if non_icp_translations != None : 
         for i in range(len(patients[i])) : 
+            non_icp_translations = np.reshape(non_icp_translations, (3,1))
             dict_patient_translation[patients[i]] = non_icp_translations[i]
     else : 
         for i in range(len(dict_paths_of_folder['list_path_series0'])) : 
